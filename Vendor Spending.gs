@@ -1,10 +1,10 @@
 /*
  * This script runs every time a user opens up the spreadsheet file it's bound to. It:
  *
- *   ** Queries the CARL reports server for results that match the criteria for high holds, which includes not just number
- *      of holds for a given title, but holdable items, copies on order but not yet received, etc.
- *   ** Parses through the results from the query to do some fine-tuning on hold ratios and exclude titles accordingly.
- *   ** Dumps the final set of results into a new tab in the spreadsheet file.
+ *   ** Queries the CARL reports server for encumbrance and spending for every vendor code in our system.
+ *   ** Parses through the results from the query to group together spending for different vendor codes that represent the 
+ *      same vendor, and to exclude vendors we don't need to track spending for as closely.
+ *   ** Compares the results to what's currently in the spreadsheet, and creates a replacement row if necessary.
  */
 
 var address = [* Your Reports IP/port *];
