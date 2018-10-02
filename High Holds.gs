@@ -1,14 +1,11 @@
 
 /*
- * This script runs daily to process circ transaction data to give us an idea of busy-ness trends. It:
+ * This script runs on demand when a user opens the bound spreadsheet file and runs "Get New Data" from the menu. It:
  *
- *   ** Makes sure there's a Circ Transaction Trends file for the current year, and creates one if there isn't.
- *   ** Queries the CARL reports server for a count of transactions per hour per branch for the preceding day.
- *   ** Dumps the contents of the data array into the end of the Data tab.
- *
- * The main tab of the Circ Transaction Trends file uses dsum functions and conditional formatting to create a heat map
- * of circ transactions that can be filtered by branch and date range.
- *
+ *   ** Queries the CARL reports server for results that match the criteria for high holds, which includes not just number
+ *      of holds for a given title, but holdable items, copies on order but not yet received, etc.
+ *   ** Parses through the results from the query to do some fine-tuning on hold ratios and exclude titles accordingly.
+ *   ** Dumps the final set of results into a new tab in the spreadsheet file.
  */
 
 var address = [* Your Reports IP/port *];
@@ -18,21 +15,7 @@ var db = [* Your Reports DB name *];
 var dbUrl = 'jdbc:oracle:thin:@//' + address + '/' + db;
 
 
-  /*
-   * Notes about this query:
-   *   ** The interior query (aliased as 't') pulls out yesterday's checkout transactions from the transaction log. If
-   *      a person has more than one checkout per hour per branch, it only returns that person once.
-   *   ** The CircDay element returns a number corresponding to the day of the week (1-7) that helps make the formulas in
-   *      the Google Sheet work correctly.
-   *   ** The CircHour element pulls the time portion of the date and then returns just the two digits corresponding to the hour.
-   *   ** The <yesterday> and <today> variables in the query ensure that when this is triggered daily, it returns 
-   *      yesterday's data.
-   *   ** Because we use this data to get a sense of how busy we are from a staffing perspective, we're excluding non-branches
-   *      from the results.
-   *   ** The outer query groups the interior query results by date, hour and branch and returns a count.
-   */
-
-
+// This function is triggered whenever the bound file is opened to add the Get New Data option to the menu
 function onOpen(e) {
   SpreadsheetApp.getUi().createMenu('Get New Data')
     .addItem('Get New Data', 'getData')
@@ -40,21 +23,13 @@ function onOpen(e) {
 }
 
 
-
-
 function getData() {
   /*
    * Notes about this query:
    *   ** This took a TREMENDOUS amount of tinkering and fine-tuning. Please feel free to use this as a starting point, but
    *      be aware that you will have to do a lot of testing to make it work with your data.
-   *   ** The CircDay element returns a number corresponding to the day of the week (1-7) that helps make the formulas in
-   *      the Google Sheet work correctly.
-   *   ** The CircHour element pulls the time portion of the date and then returns just the two digits corresponding to the hour.
-   *   ** The <yesterday> and <today> variables in the query ensure that when this is triggered daily, it returns 
-   *      yesterday's data.
-   *   ** Because we use this data to get a sense of how busy we are from a staffing perspective, we're excluding non-branches
-   *      from the results.
-   *   ** The outer query groups the interior query results by date, hour and branch and returns a count.
+   *   ** Take a look at High Holds annotated.sql <https://github.com/sclsnj/ad-hoc-gas/blob/master/High%20Holds%20annotated.sql>
+   *      to see how the query was built up step by step.
    */
 
    var sql = 'SELECT bibs.bid, bibs.author, bibs.title, bibs.isbn, format.formattext, holds.holdcount, realitems.realcount, ' + 
@@ -110,6 +85,11 @@ function getData() {
   var results = stmt.executeQuery(sql);
   var data = [];
   data.push(['BID', 'Author', 'Title', 'ISBN', 'Format', 'Holds', 'Items', 'On Order', 'Ratio']);
+  
+  /* For each result from the query:
+   *  - Do some fine-tuning on number formats
+   *  - Use the appropriate ratio for each format to decide whether or not to include the result in the final sheet
+   */
   while (results.next()) {
     var holds = results.getString(6);
     var items = results.getString(7);
@@ -152,6 +132,8 @@ function getData() {
       data.push([results.getString(1), results.getString(2), results.getString(3), results.getString(4), format, holds, items, order, ratio]);
     }
   }
+  
+  // Add a new sheet with today's date on it (or create a duplicate, if a sheet for today exists already)
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var date = new Date();
   var name = date.toLocaleDateString();
@@ -160,6 +142,8 @@ function getData() {
     name += ' (2)'
   }
   var sheet = ss.insertSheet(name);
+  
+  // Dump in the high holds data and format the sheet for column width and number format
   var range = sheet.getRange(1, 1, data.length, 9).setValues(data);
   var numRows = sheet.getLastRow();
   sheet.setFrozenRows(1);
