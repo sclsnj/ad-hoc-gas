@@ -1,3 +1,38 @@
+
+/*
+ * This script runs daily to process circ transaction data to give us an idea of busy-ness trends. It:
+ *
+ *   ** Makes sure there's a Circ Transaction Trends file for the current year, and creates one if there isn't.
+ *   ** Queries the CARL reports server for a count of transactions per hour per branch for the preceding day.
+ *   ** Dumps the contents of the data array into the end of the Data tab.
+ *
+ * The main tab of the Circ Transaction Trends file uses dsum functions and conditional formatting to create a heat map
+ * of circ transactions that can be filtered by branch and date range.
+ *
+ */
+
+var address = [* Your Reports IP/port *];
+var username = 'reports';
+var userPwd = 'carlx';
+var db = [* Your Reports DB name *];
+var dbUrl = 'jdbc:oracle:thin:@//' + address + '/' + db;
+
+
+  /*
+   * Notes about this query:
+   *   ** The interior query (aliased as 't') pulls out yesterday's checkout transactions from the transaction log. If
+   *      a person has more than one checkout per hour per branch, it only returns that person once.
+   *   ** The CircDay element returns a number corresponding to the day of the week (1-7) that helps make the formulas in
+   *      the Google Sheet work correctly.
+   *   ** The CircHour element pulls the time portion of the date and then returns just the two digits corresponding to the hour.
+   *   ** The <yesterday> and <today> variables in the query ensure that when this is triggered daily, it returns 
+   *      yesterday's data.
+   *   ** Because we use this data to get a sense of how busy we are from a staffing perspective, we're excluding non-branches
+   *      from the results.
+   *   ** The outer query groups the interior query results by date, hour and branch and returns a count.
+   */
+
+
 function onOpen(e) {
   SpreadsheetApp.getUi().createMenu('Get New Data')
     .addItem('Get New Data', 'getData')
@@ -5,17 +40,24 @@ function onOpen(e) {
 }
 
 
-// Ad Hoc Database credentials
-var address = '209.212.22.12:1521';
-var username = 'reports';
-var userPwd = 'carlx';
-var db = 'somprod';
-var dbUrl = 'jdbc:oracle:thin:@//' + address + '/' + db;
 
 
 function getData() {
+  /*
+   * Notes about this query:
+   *   ** This took a TREMENDOUS amount of tinkering and fine-tuning. Please feel free to use this as a starting point, but
+   *      be aware that you will have to do a lot of testing to make it work with your data.
+   *   ** The CircDay element returns a number corresponding to the day of the week (1-7) that helps make the formulas in
+   *      the Google Sheet work correctly.
+   *   ** The CircHour element pulls the time portion of the date and then returns just the two digits corresponding to the hour.
+   *   ** The <yesterday> and <today> variables in the query ensure that when this is triggered daily, it returns 
+   *      yesterday's data.
+   *   ** Because we use this data to get a sense of how busy we are from a staffing perspective, we're excluding non-branches
+   *      from the results.
+   *   ** The outer query groups the interior query results by date, hour and branch and returns a count.
+   */
 
-  var sql = 'SELECT bibs.bid, bibs.author, bibs.title, bibs.isbn, format.formattext, holds.holdcount, realitems.realcount, ' + 
+   var sql = 'SELECT bibs.bid, bibs.author, bibs.title, bibs.isbn, format.formattext, holds.holdcount, realitems.realcount, ' + 
             '    (CASE WHEN (onorder.onordercount = 0 OR onorder.onordercount IS NULL) THEN pending.copycount ELSE onorder.onordercount END) as ordercount ' +
             'FROM bbibmap_v bibs ' +
             'LEFT JOIN ' +
