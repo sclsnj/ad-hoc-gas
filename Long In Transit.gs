@@ -1,13 +1,10 @@
 /*
- * This script runs daily to process circ transaction data to give us an idea of busy-ness trends. It:
+ * This script runs weekly to create an up-to-date list of items that have been in transit for longer than 5 days. It:
  *
- *   ** Makes sure there's a Circ Transaction Trends file for the current year, and creates one if there isn't.
- *   ** Queries the CARL reports server for a count of transactions per hour per branch for the preceding day.
- *   ** Dumps the contents of the data array into the end of the Data tab.
- *
- * The main tab of the Circ Transaction Trends file uses dsum functions and conditional formatting to create a heat map
- * of circ transactions that can be filtered by branch and date range.
- *
+ *   ** Queries the CARL reports server for items that are in transit and that meet the query criteria (see "Notes about
+ *      this query").
+ *   ** Parses through each result from the query and assigns it to each branch where it has had some contact.
+ *   ** Clears out each existing sheet and dumps in new data.
  */
 
 var address = [* Your Reports IP/port *];
@@ -17,6 +14,19 @@ var db = [* Your Reports DB name *];
 var dbUrl = 'jdbc:oracle:thin:@//' + address + '/' + db;
 
 function getData() {
+  /*
+   * Notes about this query:
+   *   ** This is pulls from a subquery made up of two queries smooshed together with a UNION statement (aliased as 'transit'). 
+   *   ** The first part of the inner 'transit' query looks at both the status of the item (in transit for a hold) and the patron 
+   *      attached to the hold from the transitem_v view, and looks for the most recent transit transaction date.
+   *   ** The second part of the inner 'transit' query looks just at the status of the item (in transit, NOT for a hold) and looks 
+   *      for the most recent transit transaction date.
+   *   ** Note the whole MAX...OVER(PARTITION BY) thing to get the most recent transit transaction.
+   *   ** The outer query gathers all of the information it needs to populate the Google Sheet, including the owning branch for
+   *      the item.
+   *   ** All string values for transaction type, status, etc. have their single-quotes escaped with a backslash. 
+   */
+ 
   var sql = 'SELECT UNIQUE transit.item, b.title, i.cn, l.locname, transit.transitdate, transit.envbranch as transitfrom, ' +
             '   branch.branchcode as transitto, br.branchcode as owningbranch, transit.patronid ' +
             'FROM bbibmap_v b, location_v l, branch_v branch, branch_v br, item_v i ' +
@@ -76,6 +86,8 @@ function getData() {
   scdata.push(['Item', 'Title', 'Call Number', 'Location', 'Transit Date', 'Transit From', 'Transit To', 'Owning', 'On Hold?']);
   
   while (results.next()) {
+    // For each result from the query, add it to the array for each branch it's involved with: in transit from, in transit to
+    // and owning.
     var from = results.getString(6);
     var to = results.getString(7);
     var own = results.getString(8);
@@ -140,11 +152,19 @@ function getData() {
     if (to.match(/WTCHNG/i) || from.match(/WTCHNG/i) || own.match(/WTCHNG/i)) {  
       wtdata.push([results.getString(1), results.getString(2), results.getString(3), results.getString(4), results.getString(5), from, to, own, results.getString(9)]);
     }
+    // Catch-all for items in transit to/from or owned by non-branch branches.
     if (to.match(/ONLINE/i) || from.match(/ONLINE/i) || own.match(/ONLINE/i) || to.match(/WVL-RS/i) || from.match(/WVL-RS/i) || own.match(/WVL-RS/i) || 
         to.match(/BGL-RS/i) ||from.match(/BGL-RS/i) || own.match(/BGL-RS/i) || to.match(/SCLSNJ/i) || from.match(/SCLSNJ/i) || own.match(/SCLSNJ/i)) {  
       scdata.push([results.getString(1), results.getString(2), results.getString(3), results.getString(4), results.getString(5), from, to, own, results.getString(9)]);
     }
   }
+  
+  /* For each sheet (tab) in the spreadsheet (file):
+   *   - Clear the existing content
+   *   - Take the name of the sheet (which happens to the be the branch code) and use it to find the right array
+   *   - Dump in the array values
+   *   - Reformat the sheet: freeze the first row, sort the data, format the columns for width, number format
+   */
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheets = ss.getSheets();
   for (var s = 0; s < sheets.length; s++) {
