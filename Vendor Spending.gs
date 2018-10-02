@@ -1,8 +1,25 @@
+/*
+ * This script runs every time a user opens up the spreadsheet file it's bound to. It:
+ *
+ *   ** Queries the CARL reports server for results that match the criteria for high holds, which includes not just number
+ *      of holds for a given title, but holdable items, copies on order but not yet received, etc.
+ *   ** Parses through the results from the query to do some fine-tuning on hold ratios and exclude titles accordingly.
+ *   ** Dumps the final set of results into a new tab in the spreadsheet file.
+ */
+
+var address = [* Your Reports IP/port *];
+var username = 'reports';
+var userPwd = 'carlx';
+var db = [* Your Reports DB name *];
+var dbUrl = 'jdbc:oracle:thin:@//' + address + '/' + db;
 
 
+// This function is triggered whenever the bound file is opened and refreshes the data.
 function onOpen(e) {
   var conn = Jdbc.getConnection(dbUrl, username, userPwd);
   var stmt = conn.createStatement(); 
+
+  
   var sql = 'SELECT v.vendorcode, encumbered.List, expended.Spent ' +
             'FROM vendor_v v ' +
             'FULL JOIN ' +
@@ -30,6 +47,7 @@ function onOpen(e) {
   while (results.next()) {
     vendors.push([results.getString(1), results.getString(2), results.getString(3)]);
   }
+  // For vendors for whom we have more than one vendor code, replace the code from CARL with a standard code
   for (var v = 0; v < vendors.length; v++) {
     var vendorcode = vendors[v][0];
     if (vendorcode.match(/^BT/)) {
@@ -41,6 +59,8 @@ function onOpen(e) {
     }
   }
   var totals = [];
+  
+  // Group together totals for vendors who share an updated vendor code
   for (var v = 0; v < vendors.length; v++) {
     var currvendor = vendors[v][0];
     var duplicate = false;
@@ -57,12 +77,17 @@ function onOpen(e) {
       totals.push([currvendor, Number(vendors[v][1]) ,Number(vendors[v][2])]);
     }
   }
+  
+  // Pull the existing data out of the spreadsheet
   var existingdata = [];
   var ss = SpreadsheetApp.getActive();
   var sheet = ss.getSheetByName('2018 Vendor Spending');
   var lastRow = ss.getLastRow();
   var range = sheet.getRange(3, 1, lastRow - 2, 9);
   existingdata = range.getValues();
+  
+  // For each row in the spreadsheet, check to see if there's new data to replace what was there, and if so,
+  // update the whole row to replace it.
   for (var d = 0; d < existingdata.length; d++) {
     var testvendor = existingdata[d][0];
     vend : for (var t = 0; t < totals.length; t++) {
@@ -82,6 +107,8 @@ function onOpen(e) {
     existingdata[d][7] = '=(C' + (d+3) + '+D' + (d+3) + '+E' + (d+3) + '+F' + (d+3) + ')-G' + (d+3);
   }
   range.setValues(existingdata);
+  
+  // Make note of the date the data was updated.
   var today = new Date();
   today = Utilities.formatDate(today, "GMT-0500", "MM-dd-yyyy");
   range = sheet.getRange(1, 5);
