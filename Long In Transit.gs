@@ -1,3 +1,21 @@
+/*
+ * This script runs daily to process circ transaction data to give us an idea of busy-ness trends. It:
+ *
+ *   ** Makes sure there's a Circ Transaction Trends file for the current year, and creates one if there isn't.
+ *   ** Queries the CARL reports server for a count of transactions per hour per branch for the preceding day.
+ *   ** Dumps the contents of the data array into the end of the Data tab.
+ *
+ * The main tab of the Circ Transaction Trends file uses dsum functions and conditional formatting to create a heat map
+ * of circ transactions that can be filtered by branch and date range.
+ *
+ */
+
+var address = [* Your Reports IP/port *];
+var username = 'reports';
+var userPwd = 'carlx';
+var db = [* Your Reports DB name *];
+var dbUrl = 'jdbc:oracle:thin:@//' + address + '/' + db;
+
 function getData() {
   var sql = 'SELECT UNIQUE transit.item, b.title, i.cn, l.locname, transit.transitdate, transit.envbranch as transitfrom, ' +
             '   branch.branchcode as transitto, br.branchcode as owningbranch, transit.patronid ' +
