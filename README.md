@@ -29,6 +29,7 @@ __High Holds__
  * Bound - script needs to be added to the Script Editor for a specific Google Sheet in order to run
  * Runs on demand via menu option
  * VERY complicated query - you'll want to do extensive testing before you embed in the script
+   * See https://github.com/sclsnj/ad-hoc-gas/blob/master/High%20Holds%20annotated.sql for more in-depth info
  * Script includes some added logic to fine-tune hold ratios
  * Inserts new data into a new tab, instead of overwriting existing data
 
