@@ -1,13 +1,6 @@
 /*
- * This script runs daily to process circ transaction data to give us an idea of busy-ness trends. It:
- *
- *   ** Makes sure there's a Circ Transaction Trends file for the current year, and creates one if there isn't.
- *   ** Queries the CARL reports server for a count of transactions per hour per branch for the preceding day.
- *   ** Dumps the contents of the data array into the end of the Data tab.
- *
- * The main tab of the Circ Transaction Trends file uses dsum functions and conditional formatting to create a heat map
- * of circ transactions that can be filtered by branch and date range.
- *
+ * This script can be deployed as a Google Sheets add on to check a set of existing ISBNs against the database
+ * and return matching BIDs. 
  */
 
 /*
