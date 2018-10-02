@@ -19,6 +19,12 @@ function onOpen(e) {
   var conn = Jdbc.getConnection(dbUrl, username, userPwd);
   var stmt = conn.createStatement(); 
 
+  /*
+   * Notes about this query:
+   *   ** We want all vendors to show up in this query, whether or not we have any encumbered or spent amounts with them. 
+   *   ** We have two inner queries -- one for encumbrance and one for spent -- because we want to distinguish between list price
+   *      and actual cost, and because we want every vendor represented.
+   */
   
   var sql = 'SELECT v.vendorcode, encumbered.List, expended.Spent ' +
             'FROM vendor_v v ' +
