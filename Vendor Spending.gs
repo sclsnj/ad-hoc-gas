@@ -66,7 +66,7 @@ function onOpen(e) {
   }
   var totals = [];
   
-  // Group together totals for vendors who share an updated vendor code
+  // Group together totals for vendors who share an updated vendor code 
   for (var v = 0; v < vendors.length; v++) {
     var currvendor = vendors[v][0];
     var duplicate = false;
