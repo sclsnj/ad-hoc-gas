@@ -5,7 +5,7 @@
  *   ** Queries the CARL reports server for results that match the criteria for high holds, which includes not just number
  *      of holds for a given title, but holdable items, copies on order but not yet received, etc.
  *   ** Parses through the results from the query to do some fine-tuning on hold ratios and exclude titles accordingly.
- *   ** Dumps the final set of results into a new tab in the spreadsheet file.
+ *   ** Dumps the final set of results into a new tab in the spreadsheet file. 
  */
 
 var address = [* Your Reports IP/port *];
