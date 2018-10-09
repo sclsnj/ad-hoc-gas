@@ -4,7 +4,7 @@
  *   ** Queries the CARL reports server for items that are in transit and that meet the query criteria (see "Notes about
  *      this query").
  *   ** Parses through each result from the query and assigns it to each branch where it has had some contact.
- *   ** Clears out each existing sheet and dumps in new data.
+ *   ** Clears out each existing sheet and dumps in new data. 
  */
 
 var address = [* Your Reports IP/port *];
