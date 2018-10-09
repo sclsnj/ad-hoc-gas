@@ -1,3 +1,5 @@
+-- This annotated SQL file shows how we built up the High Holds query, piece by piece
+
 -- COUNT HOLDS
 -- Come up with a number of active title-level holds that aren't suspended ("R*") by bid
 SELECT bid, COUNT(bid) as holdcount
