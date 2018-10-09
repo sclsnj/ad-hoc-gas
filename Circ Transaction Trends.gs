@@ -6,7 +6,7 @@
  *   ** Dumps the contents of the data array into the end of the Data tab.
  *
  * The main tab of the Circ Transaction Trends file uses dsum functions and conditional formatting to create a heat map
- * of circ transactions that can be filtered by branch and date range.
+ * of circ transactions that can be filtered by branch and date range. 
  *
  */
 
