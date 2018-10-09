@@ -1,6 +1,6 @@
 /*
  * This script can be deployed as a Google Sheets add on to check a set of existing ISBNs against the database
- * and return matching BIDs. 
+ * and return matching BIDs.  
  */
 
 /*
