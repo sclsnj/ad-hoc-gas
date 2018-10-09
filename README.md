@@ -10,6 +10,7 @@ __Circ Transaction Trends__
  * Looks for a file matching a particular year + name combination
    * If it finds the file, it appends the data to what's already there
    * If if doesn't find the file, it creates it and then adds the data
+ * The fancy heat map is all Google Sheets formulas and conditional formatting -- see Heat Map.md for more info
 
 __Check ISBNs__
  * Unbound - script can be saved as a standalone file
