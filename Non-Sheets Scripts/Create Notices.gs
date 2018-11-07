@@ -1,10 +1,25 @@
-function myFunction() {
-  var address = '209.212.22.12:1521';
-  var username = 'reports';
-  var userPwd = 'carlx';
-  var db = 'somprod';
-  var dbUrl = 'jdbc:oracle:thin:@//' + address + '/' + db;
+/*
+ * This script runs Monday through Friday to pull notice data out of CARL and format it nicely:
+ *
+ *   ** Queries the CARL reports server for notices from the last day they were processed (three days ago if it's Monday;
+ *      yesterday if it's Tuesday through Friday).
+ *   ** Parses through the notice data to create an array for each type of notice that we want to print.
+ *   ** Loops through the array for each notice type to create a new notice for each patron, with multiple items listed per
+ *      notice, if applicable.
+ *   ** Saves the Google Doc in a shared folder and sends it by email to the group of staff who would typically print and send.
+ *
+ * Functions around Google Docs are a little more complicated than those for Google Sheets, especially when it comes to formatting
+ * data. An alternative method might be to format the data using HTML, which can then be saved/sent as a PDF.
+ *
+ */
 
+var address = [* Your Reports IP/port *];
+var username = 'reports';
+var userPwd = 'carlx';
+var db = [* Your Reports DB name *];
+var dbUrl = 'jdbc:oracle:thin:@//' + address + '/' + db;
+
+function myFunction() {
   // Get notice data
   var today = new Date();
   var day = today.getDay();
@@ -93,6 +108,7 @@ function myFunction() {
   var newPatron = true;
   for (var i = 0; i < lostNoticeItems.length; i++) {
     var noticetype = lostNoticeItems[i][21];
+    // If this is the first entry for a given patron, add the notice header and information about the first item.
     if (newPatron) {
       var system = body.appendParagraph('Somerset County Library System of New Jersey');
       system.setAttributes(systemstyle);
@@ -153,6 +169,8 @@ function myFunction() {
     cost.setAttributes(itemstyle);
     cost.setAttributes(alertstyle);
     
+    // If there are no additional items for the current patron, add the footer and start the next notice. Otherwise, move to the
+    // next entry and just add the relevant item data.
     var patron = lostNoticeItems[i][1];
     if (i + 1 != lostNoticeItems.length) {
       var nextPatron = lostNoticeItems[i+1][1];
@@ -181,7 +199,8 @@ function myFunction() {
   var newPatron = true;
   for (var i = 0; i < holdNoticeItems.length; i++) {
     var noticetype = holdNoticeItems[i][21];
-    if (newPatron) {
+     // If this is the first entry for a given patron, add the notice header and information about the first item.
+     if (newPatron) {
       var system = body.appendParagraph('Somerset County Library System of New Jersey');
       system.setAttributes(systemstyle);
       var branchAddress = holdNoticeItems[i][29];
@@ -231,7 +250,9 @@ function myFunction() {
     var pickup = body.appendParagraph('Ready at the ' + holdNoticeItems[i][28] + ' through ' + pickupDate);
     pickup.setAttributes(itemstyle);
     pickup.setSpacingAfter(12);
-    
+
+    // If there are no additional items for the current patron, add the footer and start the next notice. Otherwise, move to the
+    // next entry and just add the relevant item data.
     var patron = holdNoticeItems[i][1];
     if (i + 1 != holdNoticeItems.length) {
       var nextPatron = holdNoticeItems[i+1][1];
@@ -257,7 +278,8 @@ function myFunction() {
   var newPatron = true;
   for (var i = 0; i < overdueNoticeItems.length; i++) {
     var noticetype = overdueNoticeItems[i][21];
-    if (newPatron) {
+     // If this is the first entry for a given patron, add the notice header and information about the first item.
+     if (newPatron) {
       var system = body.appendParagraph('Somerset County Library System of New Jersey');
       system.setAttributes(systemstyle);
       var branchAddress = overdueNoticeItems[i][29];
@@ -308,6 +330,8 @@ function myFunction() {
     due.setAttributes(itemstyle);
     due.setAttributes(alertstyle);
     
+    // If there are no additional items for the current patron, add the footer and start the next notice. Otherwise, move to the
+    // next entry and just add the relevant item data.
     var patron = overdueNoticeItems[i][1];
     if (i + 1 != overdueNoticeItems.length) {
       var nextPatron = overdueNoticeItems[i+1][1];
