@@ -1,0 +1,312 @@
+/*
+
+This project is for a standalone add-on for Google Sheets that allows Collection Development 
+to automate running and formatting collection reports.
+
+The add-on has been published in the Chrome Web Store and made available only to SCLSNJ
+domain users.
+
+This Code.gs file includes the Javascript tied to collchecksidebar.html, as well as utility functions
+called by the other .gs files in this project.
+
+*/
+
+// Immediately initiates the menu when the add-on is installed
+function onInstall(e) {
+  onOpen(e);
+}
+
+// Initiates the add-on menu to include the available functions
+function onOpen(e) {
+  SpreadsheetApp.getUi().createAddonMenu()
+    //.addItem('Format Collection Check', 'showSidebar')
+    //.addItem('Run non-fiction use report by Dewey', 'useByDewey')
+    //.addItem('Run overall collection use report', 'useByCollection')
+    //.addItem('Run music CD use report by genre', 'useByMusicGenre')
+    .addItem('CARL Collection Check', 'showCARLSidebar')
+    .addToUi();
+}
+
+
+// Opens the 'Format Collection Check' sidebar as html
+function showSidebar() {
+  var ui = HtmlService.createHtmlOutputFromFile('collchecksidebar')
+      .setTitle('Format Collection Check')
+      .setSandboxMode(HtmlService.SandboxMode.IFRAME);
+  SpreadsheetApp.getUi().showSidebar(ui);
+}
+
+
+function showCARLSidebar() {
+  var ui = HtmlService.createHtmlOutputFromFile('CARLcollchecksidebar')
+      .setTitle('CARL Collection Check')
+  SpreadsheetApp.getUi().showSidebar(ui);
+}
+
+
+// Gets the stored user preferences for formatting collection checks, if they exist
+function getPreferences() {
+  var userProperties = PropertiesService.getUserProperties();
+  var formatPrefs = {
+    useOldandout: userProperties.getProperty('useOldandout'),
+    pubdateAge: userProperties.getProperty('pubdateAge'),
+    useOldorhold: userProperties.getProperty('useOldorhold'),
+    useNocirc: userProperties.getProperty('useNocirc'),
+    ladAge: userProperties.getProperty('ladAge'),
+    useOldwithrecent: userProperties.getProperty('useOldwithrecent'),
+    createdAge: userProperties.getProperty('createdAge'),
+    useSupercirc: userProperties.getProperty('useSupercirc'),
+    bigCirc: userProperties.getProperty('bigCirc'),
+    useConstantcirc: userProperties.getProperty('useConstantcirc'),
+    circRate: userProperties.getProperty('circRate')
+  };
+  return formatPrefs;
+}
+
+function formatDateForSql(date) {
+  var properDate = new Date(date);
+  var day = properDate.getUTCDate();
+  if (day < 10) {
+    day = '0' + day;
+  }
+  var year = properDate.getUTCFullYear().toString();
+  year = year.substr(2,2);
+  var month = properDate.getUTCMonth();
+  if (month == 0) {
+    return day + '-JAN-' + year;
+  } else if (month == 1) {
+    return day + '-FEB-' + year;
+  } else if (month == 2) {
+    return day + '-MAR-' + year;
+  } else if (month == 3) {
+    return day + '-APR-' + year;
+  } else if (month == 4) {
+    return day + '-MAY-' + year;
+  } else if (month == 5) {
+    return day + '-JUN-' + year;
+  } else if (month == 6) {
+    return day + '-JUL-' + year;
+  } else if (month == 7) {
+    return day + '-AUG-' + year;
+  } else if (month == 8) {
+    return day + '-SEP-' + year;
+  } else if (month == 9) {
+    return day + '-OCT-' + year;
+  } else if (month == 0) {
+    return day + '-NOV-' + year;
+  } else if (month == 11) {
+    return day + '-DEC-' + year;
+  }
+}
+
+
+
+// formatData Utility: formats individual dates, percentages, and numbers properly
+function formatData(sheet) {
+  var numRows = sheet.getLastRow();
+  var numCols = sheet.getLastColumn();
+  var values = sheet.getDataRange().getValues();
+  var dataType = '';
+  var colFormats = [];  
+  sheet.getDataRange().clearFormat();
+  
+  for (var col = 0; col < numCols; col++) {
+    var testHeader = values[0][col].toString();
+    if (testHeader.match(/call/i) || testHeader.match(/barcode/i)) {
+      dataType = '@STRING@';
+    }
+    else if (testHeader.match(/subject/i) || testHeader.match(/title/i) || testHeader.match(/author/i)) {
+      dataType = '@STRING@';
+    }
+    else if (testHeader.match(/pub date/i) || testHeader.match(/stock/i)) {
+      dataType = '@STRING@';
+    }
+    else if (testHeader.match(/% /)) {
+      dataType = '0.00%';
+    }
+    else if (testHeader.match(/total/i) || testHeader.match(/chkout/i) || testHeader.match(/circ/i) || testHeader.match(/use/i)) {
+      dataType = '0';
+    }
+    else if (testHeader.match(/turnover/i)) {
+      dataType = '0.00';
+    }
+    else if (testHeader.match(/created/i) || testHeader.match(/date/i)) {
+      dataType = 'mm/dd/yyyy';
+    }
+    else {
+      dataType = '';
+    }       
+    colFormats.push( [ col, dataType ] );
+    dataType = '';
+  }
+
+  // Parse through the formating instructions for each column and set accordingly.  
+  for (var col = 0; col < numCols; col++) {
+    var range = sheet.getRange(1, col + 1, numRows);
+    range.setNumberFormat(colFormats[col][1]);
+  }
+}
+
+
+// formatReport Utility: formats report columns, rows, etc., sets conditional formatting for flags
+function formatReport(sheet) {
+  var numRows = sheet.getLastRow();
+  var numCols = sheet.getLastColumn();
+  var values = sheet.getDataRange().getValues();
+  var dataType, width, heat = '';
+  var hide, wrap = false;
+  var colFormats = [];
+  
+  // set up formatting criteria for data type, column width, heat flag, column hide, text wrap 
+  for (var col = 0; col < numCols; col++) {
+    var testHeader = values[0][col].toString();
+    if (testHeader.match('Call Range')) {
+      width = '162';
+      wrap = true;
+    }
+    if (testHeader.match(/call/i) || testHeader.match(/barcode/i)) {
+      dataType = '@STRING@';
+    }
+    else if (testHeader.match(/subject/i) || testHeader.match(/title/i) || testHeader.match(/author/i)) {
+      dataType = '@STRING@';
+    }
+    else if (testHeader.match(/pub date/i) || testHeader.match(/stock/i)) {
+      dataType = '@STRING@';
+    }
+    else if (testHeader.match(/% /)) {
+      dataType = '0.00%';
+    }
+    else if (testHeader.match(/total/i) || testHeader.match(/chkout/i) || testHeader.match(/circ/i) || testHeader.match(/use/i)) {
+      dataType = '0';
+    }
+    else if (testHeader.match(/turnover/i)) {
+      dataType = '0.00';
+      width = '90';
+      heat = 'turnover';
+    }
+    else if (testHeader.match('Stock Level')) {
+      width = '90';
+      heat = 'overUnder';
+    }
+    else if (testHeader.match(/created/i) || testHeader.match(/date/i)) {
+      dataType = 'mm/dd/yyyy';
+    }
+    else if (testHeader.match('Subject')) {
+      width = '192';
+      wrap = true;
+    }
+    else if (testHeader.match(/call #/i)) {
+      width = '100';
+    }
+    else if (testHeader.match(/location/i)) {
+      hide = true;
+    }
+    else if (testHeader.match(/title/i)) {
+      width = '300';
+    }
+    else if (testHeader.match(/author/i)) {
+      width = '200';
+    }
+    else if (testHeader.match(/barcode/i) || testHeader.match(/item/i)) {
+      width = '120';
+    }
+    else if ((testHeader.match(/chkout/i)) || (testHeader.match(/circ/i))) {
+      width = '40';
+    }
+    else if (testHeader.match(/flag/i)) {
+      width = '235';
+      heat = 'flag';
+    }
+    else {
+      width = '70';
+    }
+    colFormats.push( [ col, width, heat, hide, wrap ] );
+    dataType = '';
+    width = '70';
+    heat = '';
+    wrap = false;
+    hide = false;
+  }
+
+  // Parse through the formating instructions for each column
+  for (var col = 0; col < numCols; col++) {
+    var range = sheet.getRange(1, col + 1, numRows);    
+    sheet.setColumnWidth(col + 1, colFormats[col][1]);               // sets column width
+    if (colFormats[col][3]) {                                        // hides column, if specified
+      sheet.hideColumns(col + 1);
+    }
+    if (colFormats[col][4]) {                                        // wraps text, if specified
+      range.setWrap(true);
+    }    
+
+    if (colFormats[col][2] == 'overUnder') {                         // sets conditional formatting based on column data
+      var overUnder = sheet.getRange(1, col + 1, numRows).getValues(); 
+      for (i = 1; i < overUnder.length; i++) {
+        if (overUnder[i][0].toString() == 'understocked') {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackgroundRGB(183,225,205);
+        }
+        else if (overUnder[i][0].toString() == 'overstocked') {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackgroundRGB(244,199,195);
+        }
+      }
+    }
+    else if (colFormats[col][2] == 'turnover') { 
+      var turnover = sheet.getRange(1, col + 1, numRows).getValues();
+      for (var i = 1; i < turnover.length; i++) {
+        if (turnover[i][0] >= 1) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackgroundRGB(183,225,205);
+        }
+        else if (turnover[i][0] < 0.6) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackgroundRGB(244,199,195);
+        }
+      }
+    }
+    else if (colFormats[col][2] == 'flag') { 
+      var flags = sheet.getRange(1, col + 1, numRows).getValues();
+      for (var i = 1; i < flags.length; i++) {
+        var flag = flags[i][0].toString();
+        if (flag.match('Checked out, older pub - replace?')) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackground('#fff2cc');
+        }
+        else if (flag.match('Checked out or on hold')) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackground('#f4cccc');
+        }
+        else if (flag.match('Zero circs')) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackground('#cfe2f3');
+        }
+        else if (flag.match('No recent activity - deselect?')) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackground('#d9ead3');
+        }
+        else if (flag.match('years old - deselect or replace?')) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackground('#fce5cd');
+        }
+        else if (flag.match('circs - deselect or replace?')) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackground('#ead1dc');
+        }
+        else if (flag.match('circs per year')) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackground('#d9d2e9');
+        }
+        else if (flag.match(/missing/i) || flag.match(/lost/i) || flag.match(/search/i) || flag.match(/claims/i) || flag.match(/billed/i) || flag.match(/found/i)) {
+          sheet.getRange(i + 1, col + 1, 1, 1).setBackground('#d9d9d9');
+        }
+      }
+    }
+  }
+
+  for (var row = 1; row <= numRows; row++) {          // sets consistent row height
+    sheet.setRowHeight(row, 28);
+  }
+  range = sheet.getDataRange();                       // sets alignment, font and size
+  range
+    .setVerticalAlignment('middle')
+    .setHorizontalAlignment('left')
+    .setFontSize('11')
+    .setFontFamily('Arial'); 
+  range = sheet.getRange(1, 1, 1, col);               // formats first row: string, v-align, h-align, bold
+  range
+    .setNumberFormat('@STRING@')
+    .setVerticalAlignment('bottom')
+    .setHorizontalAlignment('left')
+    .setFontWeight('bold');
+  sheet.setFrozenRows(1);                             // freezes first row
+}
