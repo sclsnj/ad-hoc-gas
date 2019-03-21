@@ -1,41 +1,5 @@
-function formatDateForSql(date) {
-  var properDate = new Date(date);
-  var day = properDate.getUTCDate();
-  if (day < 10) {
-    day = '0' + day;
-  }
-  var year = properDate.getUTCFullYear().toString();
-  year = year.substr(2,2);
-  var month = properDate.getUTCMonth();
-  if (month == 0) {
-    return day + '-JAN-' + year;
-  } else if (month == 1) {
-    return day + '-FEB-' + year;
-  } else if (month == 2) {
-    return day + '-MAR-' + year;
-  } else if (month == 3) {
-    return day + '-APR-' + year;
-  } else if (month == 4) {
-    return day + '-MAY-' + year;
-  } else if (month == 5) {
-    return day + '-JUN-' + year;
-  } else if (month == 6) {
-    return day + '-JUL-' + year;
-  } else if (month == 7) {
-    return day + '-AUG-' + year;
-  } else if (month == 8) {
-    return day + '-SEP-' + year;
-  } else if (month == 9) {
-    return day + '-OCT-' + year;
-  } else if (month == 0) {
-    return day + '-NOV-' + year;
-  } else if (month == 11) {
-    return day + '-DEC-' + year;
-  }
-}
-
-
-// Called from the sidebar, runs the actual collection check formatting
+// Called from the sidebar on submitting the form, this function constructs the ad hoc query, 
+// receives and handles data, and pushes it into the Google Sheet.
 function formatCARLCollCheck(formData) {
   var createdstart, createdend, statusstart, statusend, modifiedstart, modifiedend, status, branch, location, media;
   var useOldandout, filterOldandout, pubdateAge, useNocirc, filterNocirc, ladAge, useOldwithrecent, filterOldwithrecent, createdAge; 
@@ -65,8 +29,9 @@ function formatCARLCollCheck(formData) {
   useConstantcirc = formData.useconstantcirc;
   filterConstantcirc = formData.filterconstantcirc;
   circRate = formData.circrate;
+ 
   var saveprefs = formData.saveprefs;
-  // Save current settings as default for this user
+  // Save current settings as default for this user, if requested
   if (saveprefs == true) {
     var userProperties = PropertiesService.getUserProperties();
     userProperties.setProperty('useOldandout', useOldandout);
@@ -80,8 +45,11 @@ function formatCARLCollCheck(formData) {
     userProperties.setProperty('useConstantcirc', useConstantcirc);
     userProperties.setProperty('circRate', circRate);
   }
-  Logger.log(formData);
+  
+  // The comment variable becomes a sort-of title for the final sheet; it could be prettier...
   var comment = 'Collection Check Parameters: \n';
+  
+  // The base query.
   var sql = 'SELECT UNIQUE i.bid, i.item, b.author, b.title, b.publishingdate, i.cn, status.description, i.price, branch.branchcode, location.locname, ' +
             '  media.medcode, i.circhistory, i.cumulativehistory, (CASE WHEN t.circdate IS NOT NULL THEN t.circdate ELSE jts.todate(i.statusdate) END), ' +
             '  (CASE WHEN b.isbn IS NOT NULL THEN b.isbn ELSE (CASE WHEN b.upc IS NOT NULL THEN b.upc ELSE null END) END) as ISBN, ' +
@@ -107,6 +75,10 @@ function formatCARLCollCheck(formData) {
             'ON i.media = media.mednumber ' +
             'WHERE b.bibtype = 0 ' +
             'AND b.acqtype = 0 ';
+  
+  // These conditions add to the query if any of the date limits are selected.
+  // NOTE: There's probably a better way to do this date formatting than using the formatDateForSQL function down below,
+  //       but dates are the bane of my existance, and this got the job done. -LH
   if (createdstart) {
     sql += 'AND jts.todate(i.creationdate) > \'' + formatDateForSql(createdstart) + '\' ';
     comment += '- created on or after ' + createdstart + '\n';
@@ -131,6 +103,8 @@ function formatCARLCollCheck(formData) {
     sql += 'AND jts.todate(i.editdate) < \'' + formatDateForSql(modifiedend) + '\' ';
     comment += '- item edited before ' + modifiedend + '\n';
   }
+  
+  // This ensures that the status part of the query behaves appropriately whether one or multiple statuses are selected.
   if (status) {
     if (Array.isArray(status)) {
       sql += 'AND i.status IN (';
@@ -143,6 +117,8 @@ function formatCARLCollCheck(formData) {
     }
     comment += '- status(es): ' + status + '\n';
   }
+  
+  // This ensures that the branch part of the query behaves appropriately whether one or multiple branches are selected.
   if (branch) {
     if (Array.isArray(branch)) {
       sql += 'AND i.branch IN (';
@@ -155,6 +131,8 @@ function formatCARLCollCheck(formData) {
     }
     comment += '- branch(es): ' + branch + '\n';
   }
+  
+  // This ensures that the location part of the query behaves appropriately whether one or multiple locations are selected.
   if (location) {
     if (Array.isArray(location)) {
       sql += 'AND i.location IN (';
@@ -167,6 +145,8 @@ function formatCARLCollCheck(formData) {
     }
     comment += '- location(s): ' + location + '\n';
   }
+  
+  // This ensures that the media part of the query behaves appropriately whether one or multiple media types are selected.
   if (media) {
     if (Array.isArray(media)) {
       sql += 'AND i.media IN (';
@@ -179,6 +159,7 @@ function formatCARLCollCheck(formData) {
     }
     comment += '- media type(s): ' + media + '\n';
   }
+ 
   if (filterOldandout) {
     sql += 'AND (sysdate - (SELECT TO_DATE((\'01-01-\'||TO_NUMBER(b.publishingdate)),\'MM-DD-YYYY\') FROM DUAL))/365 >= ' + pubdateAge + ' ' +
            'AND i.status IN (\'C\', \'CT\', \'H\', \'IH\') ';
@@ -200,17 +181,18 @@ function formatCARLCollCheck(formData) {
     sql += 'AND (i.cumulativehistory/((sysdate - jts.todate(i.creationdate))/365)) >= ' + circRate + ' ';
     comment += '- circulated at least  ' + pubdateAge + ' times per year since we\'ve had them\n';
   }
-  //Logger.log(sql);
-  var address = '209.212.22.12:1521';
+  
+  // You can, of course, store these as script parameters and pull from there rather than including in the code.
+  var address = [* Your Reports IP/port *];
   var username = 'reports';
   var userPwd = 'carlx';
-  var db = 'somprod';
+  var db = [* Your Reports DB name *];
+  
   var dbUrl = 'jdbc:oracle:thin:@//' + address + '/' + db;
   var conn = Jdbc.getConnection(dbUrl, username, userPwd);
   var stmt = conn.createStatement();
   var results = stmt.executeQuery(sql);
-  var data = [];
-  Logger.log(sql);
+  var data = []; 
   if (results) {
     while (results.next()) {
       data.push([results.getString(1), results.getString(2), results.getString(3), results.getString(4), results.getString(5), results.getString(6), 
@@ -222,16 +204,23 @@ function formatCARLCollCheck(formData) {
     Logger.log(results.getWarnings());
   }
   conn.close();
+  
   var today = new Date();
   for (var x = 0; x < data.length; x++) {
     var flag = '';
+    
+    // Standardizes pubdate as an actual date, for better date comparison and sorting; it also arbitrarily makes the pub date
+    // ten years ago if it can't make sense of the pub year coming from the query.
     if (data[x][5]) {
       var pubyear = data[x][5].toString();
     } else {
       var pubyear = today.getFullYear - 10;
     }
     var pubdate = new Date('01/01/' + pubyear);
-    // The order of these is based on which flag should show if more than one applies...
+    
+    // Flags! This whole section populates the added "Flag" column in the spreadsheet, which we use to give branch staff some
+    // added info about the items the might be searching for. 
+    // NOTE: The order in which these are processed is based on our rules for which flag should show if more than one applies...
     var circs = Number(data[x][12]);
     if (data[x][13]) {
       var lastCirc = new Date(data[x][13].substr(0,10));
@@ -281,17 +270,59 @@ function formatCARLCollCheck(formData) {
     }
     flag = '';
   }
-  Logger.log(data);
-  
+ 
+  // Put all of the processed query data in the spreadsheet, starting with row 2 so that we can add the header in row 1
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getActiveSheet();
   sheet.getRange(2, 1, data.length, 20).setValues(data);
+  // Add header row
   var headers = [['BID', 'Item', 'Author', 'Title', 'Pub Date', 'Call #', 'Status', 'Price', 'Branch', 'Location', 'Media', 
                  'Current Circ', 'Total Circ', 'Last Circ', 'ISBN', 'Created Date', 'Edited Date', 'Status Date', 'In House Use', 'Flag']];
   sheet.getRange(1, 1, 1, 20).setValues(headers);
+  
+  // Calls the formatReport function from code.gs, which is what makes number formats, conditional formatting, etc. work
   formatReport(sheet);
+
+  // If the comment variable from up above has something in it, stick it in an inserted row at the top of the sheet.
   if (comment) {
     sheet.insertRowBefore(1);
     sheet.getRange(1,1).setValue(comment);
+  }
+}
+
+
+function formatDateForSql(date) {
+  var properDate = new Date(date);
+  var day = properDate.getUTCDate();
+  if (day < 10) {
+    day = '0' + day;
+  }
+  var year = properDate.getUTCFullYear().toString();
+  year = year.substr(2,2);
+  var month = properDate.getUTCMonth();
+  if (month == 0) {
+    return day + '-JAN-' + year;
+  } else if (month == 1) {
+    return day + '-FEB-' + year;
+  } else if (month == 2) {
+    return day + '-MAR-' + year;
+  } else if (month == 3) {
+    return day + '-APR-' + year;
+  } else if (month == 4) {
+    return day + '-MAY-' + year;
+  } else if (month == 5) {
+    return day + '-JUN-' + year;
+  } else if (month == 6) {
+    return day + '-JUL-' + year;
+  } else if (month == 7) {
+    return day + '-AUG-' + year;
+  } else if (month == 8) {
+    return day + '-SEP-' + year;
+  } else if (month == 9) {
+    return day + '-OCT-' + year;
+  } else if (month == 0) {
+    return day + '-NOV-' + year;
+  } else if (month == 11) {
+    return day + '-DEC-' + year;
   }
 }
