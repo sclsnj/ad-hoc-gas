@@ -314,6 +314,14 @@
 
     <script>
 
+      // On document load, assign click handlers to each button and try to load the user's preferences if 
+      // previously set in the script's Properties Service.
+      $(function() {
+        $('#run-formatcollcheck').click(formatCollCheck);
+        google.script.run.withSuccessHandler(loadPreferences)
+            .withFailureHandler(showError).getPreferences();
+      });
+
       // Callback function that populates the collection check format preferences with the user's preferences, if the user
       // has set preferred defaults.
       function loadPreferences(formatPrefs) {
