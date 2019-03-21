@@ -310,7 +310,8 @@
 
     <script>
 
-      // Callback function that populates the collection check format preferences with the user's preferences.
+      // Callback function that populates the collection check format preferences with the user's preferences, if the user
+      // has set preferred defaults.
       function loadPreferences(formatPrefs) {
         if (formatPrefs.useOldandout === 'true') {
           $('#oldandout').prop('checked', true);
