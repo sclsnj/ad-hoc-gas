@@ -1,0 +1,366 @@
+<!-- HTML for the CARL Collection Check sidebar, served up when you click "CARL Collection Check" in the add-on menu -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <!-- The CSS package above applies Google styling to buttons and other elements. -->
+
+    <style>
+    .branding-below {
+      bottom: 56px;
+      top: 0;
+    }
+
+    .branding-text {
+      left: 7px;
+      position: relative;
+      top: 3px;
+    }
+
+    .col-contain {
+      overflow: hidden;
+    }
+
+    .width-100 {
+      width: 100%;
+    }
+    
+    .item {
+      padding-bottom: 15px;
+    }
+    
+    </style>
+  </head>
+  <body>
+    <div class="sidebar branding-below">
+      <form name="collparams" onsubmit="event.preventDefault(); formatCollCheck(this)">
+        <div class="block">
+            <div class="item">
+              Creation Date: <br />
+              <label for="createdstart">On or after </label>
+              <input type="date" name="createdstart" id="createdstart"><br />
+              <label for="createdend">Before </label>
+              <input type="date" name="createdend" id="createdend">
+            </div>
+            <div class="item">
+              Status Date: <br />
+              <label for="statusstart">On or after </label>
+              <input type="date" name="statusstart" id="statusstart"> <br />
+              <label for="statusend">Before </label>
+              <input type="date" name="statusend" id="statusend">             
+            </div>
+            <div class="item">
+              Last Edited: <br />
+              <label for="modifiedstart">On or after </label>
+              <input type="date" name="modifiedstart" id="modifiedstart"> <br />
+              <label for="modifiedend">Before </label>
+              <input type="date" name="modifiedend" id="modifiedend">
+            </div>
+            <div class="item">
+              <select multiple="true" name="status" size="6">
+                <option value="C">Checked Out</option>
+                <option value="CT">Checked Out Temporary</option>
+                <option value="SS">Custom Status 3</option>
+                <option value="SO">Custom Status 4</option>
+                <option value="SG">Damaged</option>
+                <option value="SI">Display</option>
+                <option value="HP">Hold Pending</option>
+                <option value="H">Hold Shelf</option>
+                <option value="HT">Hold Shelf Temporary</option>
+                <option value="I">In Transit</option>
+                <option value="IH">In Transit Hold</option>
+                <option value="IT">In Transit Temporary Item</option>
+                <option value="L">Lost</option>
+                <option value="LT">Lost Temporary</option>
+                <option value="SM">Missing</option>
+                <option value="SX">Not On Shelf</option>
+                <option value="S">On Shelf</option>
+                <option value="SP">On Shelf In Process</option>
+                <option value="SN">On Shelf Not Inventoried</option>
+                <option value="ST">On Shelf Temporary</option>
+                <option value="SC">Presumed Stolen (Custom Status 1)</option>
+                <option value="SD">Shelving Delay</option>
+                <option value="T">Traced</option>
+                <option value="TT">Traced Temporary</option>
+                <option value="SU">TS Problem (Custom Status 2)</option>
+                <option value="SW">Withdrawn</option>   
+              </select>
+            </div>
+            <div class="item">
+              <select multiple="true" name="branch" size="6">
+                <option value="1">Bound Brook branch</option>
+                <option value="3">Bridgewater branch</option>
+                <option value="4">Hillsborough branch</option>
+                <option value="5">Manville branch</option>
+                <option value="6">Mary Jacobs branch</option>
+                <option value="7">North Plainfield branch</option>
+                <option value="8">Peapack & Gladstone branch</option>
+                <option value="9">Somerville branch</option>
+                <option value="10">Warren Township branch</option>
+                <option value="12">Watchung branch</option>
+                <option value="13">SCLSNJ</option>
+                <option value="14">SCLSNJ Online</option>
+                <option value="2">Branchburg reading station</option>
+                <option value="11">Wash. Valley reading station</option>
+              </select>
+            </div>
+            <div class="item">
+              <select multiple="true" name="location" size="6">
+                <option value="2">Adult Atlas Case</option>
+                <option value="3">Adult Audiobooks</option>
+                <option value="4">Adult Biographies</option>
+                <option value="5">Adult Blu-Rays</option>
+                <option value="20">Adult Book Discussion Kits</option>
+                <option value="19">Adult Business Kits</option>
+                <option value="6">Adult Business Reference</option>
+                <option value="7">Adult Consumer Resources</option>
+                <option value="8">Adult Reference Desk</option>
+                <option value="9">Adult DVDs</option>
+                <option value="11">Adult ESOL</option>
+                <option value="12">Adult Fiction</option>
+                <option value="13">Adult Fiction - Mystery</option>
+                <option value="14">Adult Fiction - SciFi/Fantasy</option>
+                <option value="10">Adult Foreign Film DVDs</option>
+                <option value="18">Adult Graphic Novels</option>
+                <option value="22">Adult Large Type</option>
+                <option value="23">Adult Magazines</option>
+                <option value="24">Adult Music CDs</option>
+                <option value="25">Adult New Materials</option>
+                <option value="29">Adult Nonfiction</option>
+                <option value="30">Adult Reference</option>
+                <option value="31">Adult Storage</option>
+                <option value="15">Adult Video Games</option>
+                <option value="21">Adult World Languages</option>
+                <option value="1">Archives</option>
+                <option value="100">Children's Audiobooks</option>
+                <option value="33">Children's Biographies</option>
+                <option value="35">Children's Blu-Rays</option>
+                <option value="36">Children's Board Books</option>
+                <option value="45">Children's Book Discussion Kit</option>
+                <option value="40">Children's Devices</option>
+                <option value="38">Children's DVDs</option>
+                <option value="39">Children's Early Readers</option>
+                <option value="41">Children's Fiction</option>
+                <option value="43">Children's Graphic Novels</option>
+                <option value="44">Children's Holidays</option>
+                <option value="48">Children's Launchpads</option>
+                <option value="49">Children's Large Type</option>
+                <option value="50">Children's Magazines</option>
+                <option value="51">Children's Music CDs</option>
+                <option value="52">Children's New Materials</option>
+                <option value="53">Children's Nonfiction</option>
+                <option value="55">Children's Parent/Teacher</option>
+                <option value="54">Children's Picture Books</option>
+                <option value="34">Children's Readalongs</option>
+                <option value="56">Children's Reference</option>
+                <option value="37">Children's Reference Desk</option>
+                <option value="57">Children's Storage</option>
+                <option value="46">Children's Storytime Kits</option>
+                <option value="58">Children's Summer Reading</option>
+                <option value="42">Children's Video Games</option>
+                <option value="47">Children's World Languages</option>
+                <option value="16">Genealogy</option>
+                <option value="17">Genealogy - Reference</option>
+                <option value="59">Interlibrary Loan</option>
+                <option value="64">Lucky Day</option>
+                <option value="26">NJ Collection</option>
+                <option value="27">NJ Collection - Glass Case</option>
+                <option value="28">NJ Collection - Reference</option>
+                <option value="65">On Order</option>
+                <option value="84">Popular DVD</option>
+                <option value="67">Staff Offices</option>
+                <option value="66">System Use</option>
+                <option value="68">Teen Audiobooks</option>
+                <option value="69">Teen Biographies</option>
+                <option value="74">Teen Book Discussion Kits</option>
+                <option value="70">Teen DVDs</option>
+                <option value="71">Teen Fiction</option>
+                <option value="73">Teen Graphic Novels</option>
+                <option value="76">Teen Large Type</option>
+                <option value="77">Teen Magazines</option>
+                <option value="78">Teen Manga</option>
+                <option value="79">Teen New Materials</option>
+                <option value="80">Teen Nonfiction</option>
+                <option value="81">Teen Reference</option>
+                <option value="82">Teen Storage</option>
+                <option value="83">Teen Summer Reading</option>
+                <option value="72">Teen Video Games</option>
+                <option value="75">Teen World Languages</option>
+                <option value="60">Tween Audiobooks</option>
+                <option value="61">Tween Biographies</option>
+                <option value="62">Tween Fiction</option>
+                <option value="63">Tween New Materials</option>
+              </select>
+            </div>
+            <div class="item">
+              <select multiple="true" name="media" size="6">
+                <option value="1">Adult Audiobook - 21</option>
+                <option value="2">Adult Blu-ray - 14</option>
+                <option value="3">Adult Blu-ray - 7</option>
+                <option value="4">Adult DVD - 14</option>
+                <option value="5">Adult DVD - 7</option>
+                <option value="6">Adult Fiction - 21</option>
+                <option value="8">Adult Large Type Fiction - 21</option>
+                <option value="9">Adult Large Type Nonfiction-21</option>
+                <option value="7">Adult Launchpad</option>
+                <option value="10">Adult Magazine</option>
+                <option value="11">Adult Music CD - 21</option>
+                <option value="12">Adult Nonfiction - 21</option>
+                <option value="13">Adult Reference</option>
+                <option value="40">Book Discussion Kit - 42</option>
+                <option value="39">Business Kit - 42</option>
+                <option value="14">Children's Audiobook - 21</option>
+                <option value="15">Children's Blu-Ray - 7</option>
+                <option value="16">Children's Board Book - 21</option>
+                <option value="17">Children's DVD - 14</option>
+                <option value="19">Children's DVD - 7</option>
+                <option value="18">Children's Device - 14</option>
+                <option value="20">Children's Early Reader - 21</option>
+                <option value="21">Children's Fiction - 21</option>
+                <option value="22">Children's Launchpad</option>
+                <option value="23">Children's Magazine - 7</option>
+                <option value="24">Children's Music CD - 21</option>
+                <option value="25">Children's Nonfiction - 21</option>
+                <option value="26">Children's Picture Book - 21</option>
+                <option value="27">Children's Reference</option>
+                <option value="28">Children's Summer Reading - 14</option>
+                <option value="30">Chromebook</option>
+                <option value="29">Equipment/Accessories</option>
+                <option value="32">High Demand Audiobook</option>
+                <option value="33">High Demand DVD</option>
+                <option value="34">High Demand Fiction</option>
+                <option value="35">High Demand Music CD</option>
+                <option value="36">High Demand Nonfiction</option>
+                <option value="102">Interlibrary Loan - 14</option>
+                <option value="37">Interlibrary Loan - 21</option>
+                <option value="38">Interlibrary Loan - 7</option>
+                <option value="42">Lucky Day Book - 10</option>
+                <option value="43">Lucky Day DVD - 4</option>
+                <option value="44">Museum Pass</option>
+                <option value="45">On Order</option>
+                <option value="104">Other Circulating Item</option>
+                <option value="100">Other Materials/Equipment</option>
+                <option value="46">Patron Request</option>
+                <option value="41">Storytime Theme Kit</option>
+                <option value="47">Teen Audiobook - 21</option>
+                <option value="48">Teen Blu-Ray - 7</option>
+                <option value="101">Teen DVD - 14</option>
+                <option value="49">Teen DVD - 7</option>
+                <option value="50">Teen Fiction - 21</option>
+                <option value="103">Teen Launchpad</option>
+                <option value="51">Teen Magazine</option>
+              </select>
+            </div>
+        </div>
+        
+        <div class="block">
+            <b>Flag</b>
+            <div class="item">
+              <input type="checkbox" name="useoldandout" id="useoldandout" checked="true">
+              <label for="useoldandout">Items currently checked out with a publication date </label>
+              <input type="number" name="pubdateage" id="pubdateage" value="10" min="1" max="50"> years old or older.<br />
+              <input type="checkbox" name="filteroldandout" id="filteroldandout" checked="false">
+              <label for="filteroldandout">Use this as a filter</label>
+            </div>
+            <div class="item">
+              <input type="checkbox" name="usenocirc" id="usenocirc" checked="true">
+              <label for="usenocirc">Items with no recent activity within the last </label>
+              <input type="number" name="ladage" id="ladage" value="36" min="1" max="120"> months.<br />
+              <input type="checkbox" name="filternocirc" id="filternocirc" checked="false">
+              <label for="filternocirc">Use this as a filter</label>
+            </div>
+            <div class="item">
+              <input type="checkbox" name="useoldwithrecent" id="useoldwithrecent" checked="true">
+              <label for="useoldwithrecent">Items with recent activity but that we've had for </label>
+              <input type="number" name="createdage" id="createdage" value="10" min="1" max="50"> years or longer.<br />
+              <input type="checkbox" name="filteroldwithrecent" id="filteroldwithrecent" checked="false">
+              <label for="filteroldwithrecent">Use this as a filter</label>
+            </div>
+            <div class="item">
+              <input type="checkbox" name="usesupercirc" id="usesupercirc" checked="true">
+              <label for="usesupercirc">Items that have had at least </label>
+              <input type="number" name="bigcirc" id="bigcirc" value="100" min="1" max="300"> circs.<br />
+              <input type="checkbox" name="filtersupercirc" id="filtersupercirc" checked="false">
+              <label for="filtersupercirc">Use this as a filter</label>
+            </div>
+            <div class="item">
+              <input type="checkbox" name="useconstantcirc" id="useconstantcirc" checked="true">
+              <label for="useconstantcirc">Items that have circulated at least </label>
+              <input type="number" name="circrate" id="circrate" value="15" min="1" max="50"> times per year since we've had them.<br />
+              <input type="checkbox" name="filterconstantcirc" id="filterconstantcirc" checked="false">
+              <label for="filterconstantcirc">Use this as a filter</label>
+            </div>
+        </div>
+
+        <div class="block">
+          <input type="checkbox" id="save-prefs" name="saveprefs">
+          <label for="save-prefs">Use these settings by default</label>
+        </div>
+
+        <div class="block" id="button-bar">
+          <input type="submit" value="Run" class="blue">
+        </div>
+      </form>
+    </div>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+    </script>
+
+    <script>
+
+      // Callback function that populates the collection check format preferences with the user's preferences.
+      function loadPreferences(formatPrefs) {
+        if (formatPrefs.useOldandout === 'true') {
+          $('#oldandout').prop('checked', true);
+        }
+        $('#pubdate').val(!formatPrefs.pubdateAge ?
+            10 : settings.pubdateAge);
+        if (formatPrefs.useOldorhold === 'true') {
+          $('#oldorhold').prop('checked', true);
+        }
+        $('#lad').val(!formatPrefs.ladAge ?
+            36 : settings.ladAge);
+        if (formatPrefs.useOldwithrecent === 'true') {
+          $('#oldwithrecent').prop('checked', true);
+        }
+        $('#created').val(!formatPrefs.createdAge ?
+            10 : settings.createdAge);
+        if (formatPrefs.useSupercirc === 'true') {
+          $('#supercirc').prop('checked', true);
+        }
+        $('#numCircs').val(!formatPrefs.bigCirc ?
+            100 : settings.bigCirc);
+        if (formatPrefs.useConstantcirc === 'true') {
+          $('#constantcirc').prop('checked', true);
+        }
+        $('#circrate').val(!formatPrefs.circRate ?
+            15 : settings.circRate);
+        $('#filteroldwithrecent').prop('checked', false);
+      }
+      
+      // Passes any saved or new format preferences back to the server-side function.
+      function formatCollCheck(form) {
+      // This is the part that actually sends the preferences back into the Google Apps Script code.
+        google.script.run
+          .withSuccessHandler(function() {
+            google.script.host.close();
+          })
+          .withFailureHandler(
+            function(msg, element) {
+              showError(msg, $('#button-bar'));
+              element.disabled = false;
+          })
+          .formatCARLCollCheck(form);
+      }
+
+
+      // Inserts a div that contains an error message after a given element.
+      function showError(msg, element) {
+        var div = $('<div id="error" class="error">' + msg + '</div>');
+        $(element).after(div);
+      }
+    </script>
+  </body>
+</html>
