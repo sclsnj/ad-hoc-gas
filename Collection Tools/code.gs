@@ -16,35 +16,26 @@ function onInstall(e) {
   onOpen(e);
 }
 
-// Initiates the add-on menu to include the available functions
+// Initiates the add-on menu to include the available functions whenever a Sheet is opened
 function onOpen(e) {
   SpreadsheetApp.getUi().createAddonMenu()
-    //.addItem('Format Collection Check', 'showSidebar')
-    //.addItem('Run non-fiction use report by Dewey', 'useByDewey')
-    //.addItem('Run overall collection use report', 'useByCollection')
-    //.addItem('Run music CD use report by genre', 'useByMusicGenre')
     .addItem('CARL Collection Check', 'showCARLSidebar')
     .addToUi();
 }
 
 
 // Opens the 'Format Collection Check' sidebar as html
-function showSidebar() {
-  var ui = HtmlService.createHtmlOutputFromFile('collchecksidebar')
-      .setTitle('Format Collection Check')
-      .setSandboxMode(HtmlService.SandboxMode.IFRAME);
-  SpreadsheetApp.getUi().showSidebar(ui);
-}
-
-
 function showCARLSidebar() {
   var ui = HtmlService.createHtmlOutputFromFile('CARLcollchecksidebar')
       .setTitle('CARL Collection Check')
   SpreadsheetApp.getUi().showSidebar(ui);
 }
 
+/*
+ * All the rest of this code gets invoked after the user chooses variables from the sidebar and submits a request.
+ */
 
-// Gets the stored user preferences for formatting collection checks, if they exist
+// Called from CARLcollchecksidebar; gets the stored user preferences for formatting collection checks, if they exist
 function getPreferences() {
   var userProperties = PropertiesService.getUserProperties();
   var formatPrefs = {
@@ -102,6 +93,8 @@ function formatDateForSql(date) {
 
 
 // formatData Utility: formats individual dates, percentages, and numbers properly
+// NOTE: This is a generic function that's used in other add ons, which is why there are columns and types listed here
+//       that don't correspond to the data coming back from the collection check.
 function formatData(sheet) {
   var numRows = sheet.getLastRow();
   var numCols = sheet.getLastColumn();
@@ -149,6 +142,8 @@ function formatData(sheet) {
 
 
 // formatReport Utility: formats report columns, rows, etc., sets conditional formatting for flags
+// NOTE: This is a generic function that's used in other add ons, which is why there are columns, flags and types listed here
+//       that don't correspond to the data coming back from the collection check.
 function formatReport(sheet) {
   var numRows = sheet.getLastRow();
   var numCols = sheet.getLastColumn();
