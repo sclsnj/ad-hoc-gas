@@ -35,6 +35,8 @@
   </head>
   <body>
     <div class="sidebar branding-below">
+      <!-- Here's the onsubmit event for the form. It triggers the formatCollCheck function below, which then passes
+           the variables back to be handled by CARLcode.gs -->
       <form name="collparams" onsubmit="event.preventDefault(); formatCollCheck(this)">
         <div class="block">
             <div class="item">
@@ -341,9 +343,9 @@
         $('#filteroldwithrecent').prop('checked', false);
       }
       
-      // Passes any saved or new format preferences back to the server-side function.
+      // Passes any saved or new preferences and variables back to the server-side function.
       function formatCollCheck(form) {
-      // This is the part that actually sends the preferences back into the Google Apps Script code.
+      // This is the part that actually sends the data back into the Google Apps Script code.
         google.script.run
           .withSuccessHandler(function() {
             google.script.host.close();
