@@ -45,8 +45,9 @@ function getData() {
             '    (SELECT bid, COUNT(bid) as realcount ' +
             '    FROM item_v ' +
             '    WHERE media <> 42 AND media <> 43  ' +
-            '    AND (status IN (\'C\', \'CT\', \'H\', \'HT\', \'I\', \'IT\', \'IH\', \'S\', \'ST\') OR (status = \'SP\' AND kbra <> \'SC\')) ' +
-            '    AND kbra <> \'BG\' AND kbra <> \'WV\' ' +
+            '    AND (status IN (\'C\', \'CT\', \'H\', \'HT\', \'I\', \'IT\', \'IH\', \'S\', \'ST\') OR 
+            '             (status = \'SP\' AND owningbranch <> 13)) ' +
+            '    AND owningbranch <> 2 AND owningbranch <> 11 ' +
             '    GROUP BY bid) realitems ' +
             'ON bibs.bid = realitems.bid ' +
             'LEFT JOIN ' +
