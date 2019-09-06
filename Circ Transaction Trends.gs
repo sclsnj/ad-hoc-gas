@@ -69,7 +69,7 @@ function getCircTransactions() {
             '    FROM txlog_v ' +
             '    WHERE transactiontype = \'CH\' ' +
             '    AND jts.todate(systemtimestamp) > \'' + yesterday + '\' AND jts.todate(systemtimestamp) < \'' + today + '\'' +
-            '    AND envbranch NOT IN (\'SE\',\'BG\',\'WV\',\'SC\',\'ON\')) t ' +
+            '    AND envbranch NOT IN (42,2,11,13,14)) t ' +
             'GROUP BY (t.circdate, t.circday, t.circhour, t.envbranch) ' +
             'ORDER BY t.circdate, t.envbranch, t.circhour';
   
